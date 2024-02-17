@@ -3,7 +3,8 @@ from uuid import UUID
 from pitch_health_monitor.models.schemas import Pitch
 from . import db_client
 
-pitches_collection = db_client.get_database().get_collection('pitches')
+pitches_collection = db_client.get_database().get_collection("pitches")
+
 
 def update_pitch_in_db(pitch_uuid: UUID, pitch: Pitch) -> bool:
     """
@@ -17,14 +18,17 @@ def update_pitch_in_db(pitch_uuid: UUID, pitch: Pitch) -> bool:
         bool: True if the pitch was successfully updated, False otherwise.
     """
 
-    result = pitches_collection.update_one({"uuid": pitch_uuid}, {"$set": pitch.model_dump()})
+    result = pitches_collection.update_one(
+        {"uuid": pitch_uuid}, {"$set": pitch.model_dump()}
+    )
 
     return result.modified_count > 0
+
 
 def create_pitch_in_db(pitch: Pitch) -> bool:
     """
     Create a new pitch object in the database.
-    
+
     Args:
         pitch: The pitch object to create in the database.
 
@@ -35,6 +39,7 @@ def create_pitch_in_db(pitch: Pitch) -> bool:
     result = pitches_collection.insert_one(pitch.model_dump())
 
     return result.acknowledged
+
 
 def delete_pitch_from_db(pitch_uuid: UUID) -> bool:
     """
@@ -51,6 +56,7 @@ def delete_pitch_from_db(pitch_uuid: UUID) -> bool:
 
     return result.deleted_count > 0
 
+
 def get_pitch_from_db(pitch_id: UUID) -> Optional[Pitch]:
     """
     Retrieve a pitch from the database by its ID.
@@ -63,6 +69,7 @@ def get_pitch_from_db(pitch_id: UUID) -> Optional[Pitch]:
     """
 
     return pitches_collection.find_one({"uuid": pitch_id})
+
 
 def get_all_pitches_from_db() -> List[Pitch]:
     """
