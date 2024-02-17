@@ -52,6 +52,7 @@ def create_pitch(pitch_request: CreatePitchRequest) -> UUID:
         location=pitch_request.location,
         turf_type=pitch_request.turf_type,
         current_condition=pitch_request.current_condition,
+        last_checked_at=datetime.utcnow(),
     )
 
     if not create_pitch_in_db(new_pitch):

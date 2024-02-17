@@ -23,8 +23,8 @@ class Pitch(BaseModel):
         default_factory=datetime.utcnow,
         description="Date and time when the pitch was created",
     )
-    last_checked_at: Optional[datetime] = Field(
-        None, description="Date and time when the pitch condition was last checked"
+    last_checked_at: datetime = Field(
+        ..., description="Date and time when the pitch condition was last checked"
     )
 
     name: str = Field(
