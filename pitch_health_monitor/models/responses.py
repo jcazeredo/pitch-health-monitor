@@ -25,8 +25,6 @@ class PitchResponse(BaseModel):
         example=Location(
             city="Kaiserslautern",
             country="Germany",
-            latitude=49.43432260240235,
-            longitude=7.7766827641282985,
         ),
         description="Location of the pitch",
     )

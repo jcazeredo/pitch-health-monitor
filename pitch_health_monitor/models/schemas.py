@@ -8,23 +8,11 @@ from enum import Enum
 class Location(BaseModel):
     city: str = Field(..., example="Kaiserslautern", description="Name of the city")
     country: str = Field(..., example="Germany", description="Name of the country")
-    latitude: float = Field(
-        ...,
-        example=49.43432260240235,
-        description="Latitude coordinate of the location",
-    )
-    longitude: float = Field(
-        ...,
-        example=7.7766827641282985,
-        description="Longitude coordinate of the location",
-    )
-
 
 class TurfType(str, Enum):
     natural = "natural"
     artificial = "artificial"
     hybrid = "hybrid"
-
 
 class Pitch(BaseModel):
     schema_version: Literal[1] = 1
@@ -45,8 +33,6 @@ class Pitch(BaseModel):
         example=Location(
             city="Kaiserslautern",
             country="Germany",
-            latitude=49.43432260240235,
-            longitude=7.7766827641282985,
         ),
         description="Location of the pitch",
     )
