@@ -1,4 +1,3 @@
-
 from pydantic import BaseModel, Field
 
 from pitch_health_monitor.models.schemas import Location, TurfType
