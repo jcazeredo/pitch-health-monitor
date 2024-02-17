@@ -1,81 +1,56 @@
 from typing import List
 from fastapi import FastAPI, HTTPException, Path
-from starlette.status import HTTP_404_NOT_FOUND
+from pitch_health_monitor.database.db_methods import get_all_pitches_from_db, get_pitch_from_db, create_pitch_in_db, update_pitch_in_db, delete_pitch_from_db
+from starlette.status import HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
 from dotenv import load_dotenv
 from uuid import UUID, uuid4
 from pitch_health_monitor.models.bodies import CreatePitchRequest, UpdatePitchRequest
 from pitch_health_monitor.models.responses import PitchResponse
+from pitch_health_monitor.models.schemas import Pitch
 
-from pitch_health_monitor.models.schemas import PitchSchema
-from .database import pitches_collection
-
-# Load environment variables from .env file
 load_dotenv()
 
 app = FastAPI()
 
 @app.post("/pitches/", response_model=UUID, description="Create a new pitch", tags=["Pitches"])
 def create_pitch(pitch_request: CreatePitchRequest) -> UUID:
-
-    new_pitch = PitchSchema(
+    new_pitch = Pitch(
         uuid=uuid4(),
         name=pitch_request.name,
         location=pitch_request.location,
         turf_type=pitch_request.turf_type,
-        last_maintenance_date=pitch_request.last_maintenance_date,
-        next_scheduled_maintenance=pitch_request.next_scheduled_maintenance,
         current_condition=pitch_request.current_condition,
-        replacement_date=pitch_request.replacement_date
     )
 
-    pitches_collection.insert_one(new_pitch.model_dump())
-
+    if not create_pitch_in_db(new_pitch):
+        raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create new pitch")
+    
     return new_pitch.uuid
-
-@app.get("/pitches/{pitch_id}", response_model=PitchResponse, description="Retrieve a pitch by its ID", tags=["Pitches"])
-def get_pitch(pitch_id: UUID = Path(..., description="The ID of the pitch to retrieve")) -> PitchResponse:
-
-    pitch_data = pitches_collection.find_one({"uuid": pitch_id})
-
-    if pitch_data is None:
-        raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Pitch not found")
-
-    pitch_response = PitchResponse.model_validate(pitch_data)
-
-    return pitch_response
 
 @app.put("/pitches/{pitch_id}", response_model=None, description="Update a pitch by its ID", tags=["Pitches"])
 def update_pitch(pitch_id: UUID, pitch_request: UpdatePitchRequest) -> None:
-    updated_pitch = PitchSchema(
-        uuid=pitch_id,
-        name=pitch_request.name,
-        location=pitch_request.location,
-        turf_type=pitch_request.turf_type,
-        last_maintenance_date=pitch_request.last_maintenance_date,
-        next_scheduled_maintenance=pitch_request.next_scheduled_maintenance,
-        current_condition=pitch_request.current_condition,
-        replacement_date=pitch_request.replacement_date
-    )
-    result = pitches_collection.update_one({"uuid": pitch_id}, {"$set": updated_pitch.model_dump()})
-
-    if result.modified_count == 0:
-        raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Pitch not found")
-
-@app.get("/pitches/", response_model=List[PitchResponse], description="Retrieve all pitches", tags=["Pitches"])
-def get_all_pitches() -> List[PitchResponse]:
-
-    pitch_data = pitches_collection.find({})
-
-    pitches = [PitchResponse.model_validate(pitch) for pitch in pitch_data]
-
-    return pitches
+    
+    if not update_pitch_in_db(pitch_id, pitch_request):
+        raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Pitch not found or not updated")
 
 @app.delete("/pitches/{pitch_id}", response_model=None, description="Delete a pitch by its ID", tags=["Pitches"])
 def delete_pitch(pitch_id: UUID) -> None:
+    if not delete_pitch_from_db(pitch_id):
+        raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Pitch not found or not deleted")
 
-    result = pitches_collection.delete_one({"uuid": pitch_id})
+@app.get("/pitches/", response_model=List[PitchResponse], description="Retrieve all pitches", tags=["Pitches"])
+def get_all_pitches() -> List[PitchResponse]:
+    pitches = get_all_pitches_from_db()
+    pitch_responses = [PitchResponse.model_validate(pitch.model_dump()) for pitch in pitches]
     
-    if result.deleted_count == 0:
+    return pitch_responses
+
+@app.get("/pitches/{pitch_id}", response_model=PitchResponse, description="Retrieve a pitch by its ID", tags=["Pitches"])
+def get_pitch(pitch_id: UUID = Path(..., description="The ID of the pitch to retrieve")) -> PitchResponse:
+    pitch = get_pitch_from_db(pitch_id)  # Call to the method that retrieves a single pitch by ID
+    
+    if pitch is None:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Pitch not found")
-    
-    return pitch_id
+    pitch_response = PitchResponse.model_validate(pitch)
+
+    return pitch_response
