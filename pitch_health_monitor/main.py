@@ -1,3 +1,4 @@
+from typing import List
 from fastapi import FastAPI, HTTPException, Path
 from starlette.status import HTTP_404_NOT_FOUND
 from dotenv import load_dotenv
@@ -59,6 +60,15 @@ def update_pitch(pitch_id: UUID, pitch_request: UpdatePitchRequest) -> None:
 
     if result.modified_count == 0:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Pitch not found")
+
+@app.get("/pitches/", response_model=List[PitchResponse], description="Retrieve all pitches")
+def get_all_pitches() -> List[PitchResponse]:
+
+    pitch_data = pitches_collection.find({})
+
+    pitches = [PitchResponse.model_validate(pitch) for pitch in pitch_data]
+
+    return pitches
 
 @app.delete("/pitches/{pitch_id}", response_model=None, description="Delete a pitch by its ID")
 def delete_pitch(pitch_id: UUID) -> None:
