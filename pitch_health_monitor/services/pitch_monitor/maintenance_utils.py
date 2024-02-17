@@ -63,6 +63,7 @@ def cancel_maintenance_if_needed(pitch: Pitch) -> Pitch:
 
     return pitch
 
+
 def perform_maintenance(pitch: Pitch) -> Pitch:
     """
     Perform maintenance on the pitch, updating its condition and date fields.
@@ -101,4 +102,3 @@ def _is_maintenance_soon(pitch: Pitch) -> bool:
         pitch.next_scheduled_maintenance is not None
         and pitch.next_scheduled_maintenance > datetime.utcnow()
     )
-
