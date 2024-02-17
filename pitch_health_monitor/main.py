@@ -1,25 +1,17 @@
 from fastapi import FastAPI, HTTPException, Path
 from starlette.status import HTTP_404_NOT_FOUND
-from pymongo import MongoClient
 from dotenv import load_dotenv
 from uuid import UUID, uuid4
 from pitch_health_monitor.models.bodies import CreatePitchRequest, UpdatePitchRequest
 from pitch_health_monitor.models.responses import PitchResponse
 
 from pitch_health_monitor.models.schemas import PitchSchema
-from .database import db
-import os
+from .database import pitches_collection
 
 # Load environment variables from .env file
 load_dotenv()
 
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://admin:password@localhost:27017/admin")
-
 app = FastAPI()
-
-# MongoDB connection
-client = MongoClient(MONGO_URI, uuidRepresentation='standard')
-pitches_collection = client.get_database().get_collection('pitches')
 
 @app.post("/pitches/", response_model=UUID, description="Create a new pitch")
 def create_pitch(pitch_request: CreatePitchRequest) -> UUID:
