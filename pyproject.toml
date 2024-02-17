@@ -18,8 +18,8 @@ requests = "^2.31.0"
 
 [tool.poetry.group.dev.dependencies]
 black = {version = "^24.2.0", allow-prereleases = true}
-flake8 = "^7.0.0"
 mypy = "^1.8.0"
+ruff = "^0.2.1"
 
 [build-system]
 requires = ["poetry-core"]
