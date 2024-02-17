@@ -1,3 +1,5 @@
+import asyncio
+from contextlib import asynccontextmanager
 from typing import List
 from fastapi import FastAPI, HTTPException, Path
 from pitch_health_monitor.database.db_methods import (
@@ -6,6 +8,9 @@ from pitch_health_monitor.database.db_methods import (
     create_pitch_in_db,
     update_pitch_in_db,
     delete_pitch_from_db,
+)
+from pitch_health_monitor.services.pitch_monitor.processor import (
+    process_all_pitches_periodically,
 )
 from starlette.status import HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
 from dotenv import load_dotenv
@@ -16,13 +21,23 @@ from pitch_health_monitor.models.schemas import Pitch
 
 load_dotenv()
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Start the routine that will process all pitches health status
+    asyncio.create_task(process_all_pitches_periodically())
+
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 @app.post(
     "/pitches/", response_model=UUID, description="Create a new pitch", tags=["Pitches"]
 )
 def create_pitch(pitch_request: CreatePitchRequest) -> UUID:
+
     new_pitch = Pitch(
         uuid=uuid4(),
         name=pitch_request.name,
@@ -47,6 +62,7 @@ def create_pitch(pitch_request: CreatePitchRequest) -> UUID:
     tags=["Pitches"],
 )
 def update_pitch(pitch_id: UUID, pitch_request: UpdatePitchRequest) -> None:
+
     if not update_pitch_in_db(pitch_id, pitch_request):
         raise HTTPException(
             status_code=HTTP_404_NOT_FOUND, detail="Pitch not found or not updated"
@@ -60,6 +76,7 @@ def update_pitch(pitch_id: UUID, pitch_request: UpdatePitchRequest) -> None:
     tags=["Pitches"],
 )
 def delete_pitch(pitch_id: UUID) -> None:
+
     if not delete_pitch_from_db(pitch_id):
         raise HTTPException(
             status_code=HTTP_404_NOT_FOUND, detail="Pitch not found or not deleted"
@@ -73,6 +90,7 @@ def delete_pitch(pitch_id: UUID) -> None:
     tags=["Pitches"],
 )
 def get_all_pitches() -> List[PitchResponse]:
+
     pitches = get_all_pitches_from_db()
     pitch_responses = [
         PitchResponse.model_validate(pitch.model_dump()) for pitch in pitches
@@ -90,9 +108,8 @@ def get_all_pitches() -> List[PitchResponse]:
 def get_pitch(
     pitch_id: UUID = Path(..., description="The ID of the pitch to retrieve"),
 ) -> PitchResponse:
-    pitch = get_pitch_from_db(
-        pitch_id
-    )  # Call to the method that retrieves a single pitch by ID
+
+    pitch = get_pitch_from_db(pitch_id)
 
     if pitch is None:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Pitch not found")
