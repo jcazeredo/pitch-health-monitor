@@ -14,7 +14,7 @@ load_dotenv()
 
 app = FastAPI()
 
-@app.post("/pitches/", response_model=UUID, description="Create a new pitch")
+@app.post("/pitches/", response_model=UUID, description="Create a new pitch", tags=["Pitches"])
 def create_pitch(pitch_request: CreatePitchRequest) -> UUID:
 
     new_pitch = PitchSchema(
@@ -32,7 +32,7 @@ def create_pitch(pitch_request: CreatePitchRequest) -> UUID:
 
     return new_pitch.uuid
 
-@app.get("/pitches/{pitch_id}", response_model=PitchResponse, description="Retrieve a pitch by its ID")
+@app.get("/pitches/{pitch_id}", response_model=PitchResponse, description="Retrieve a pitch by its ID", tags=["Pitches"])
 def get_pitch(pitch_id: UUID = Path(..., description="The ID of the pitch to retrieve")) -> PitchResponse:
 
     pitch_data = pitches_collection.find_one({"uuid": pitch_id})
@@ -44,7 +44,7 @@ def get_pitch(pitch_id: UUID = Path(..., description="The ID of the pitch to ret
 
     return pitch_response
 
-@app.put("/pitches/{pitch_id}", response_model=None, description="Update a pitch by its ID")
+@app.put("/pitches/{pitch_id}", response_model=None, description="Update a pitch by its ID", tags=["Pitches"])
 def update_pitch(pitch_id: UUID, pitch_request: UpdatePitchRequest) -> None:
     updated_pitch = PitchSchema(
         uuid=pitch_id,
@@ -61,7 +61,7 @@ def update_pitch(pitch_id: UUID, pitch_request: UpdatePitchRequest) -> None:
     if result.modified_count == 0:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Pitch not found")
 
-@app.get("/pitches/", response_model=List[PitchResponse], description="Retrieve all pitches")
+@app.get("/pitches/", response_model=List[PitchResponse], description="Retrieve all pitches", tags=["Pitches"])
 def get_all_pitches() -> List[PitchResponse]:
 
     pitch_data = pitches_collection.find({})
@@ -70,7 +70,7 @@ def get_all_pitches() -> List[PitchResponse]:
 
     return pitches
 
-@app.delete("/pitches/{pitch_id}", response_model=None, description="Delete a pitch by its ID")
+@app.delete("/pitches/{pitch_id}", response_model=None, description="Delete a pitch by its ID", tags=["Pitches"])
 def delete_pitch(pitch_id: UUID) -> None:
 
     result = pitches_collection.delete_one({"uuid": pitch_id})
