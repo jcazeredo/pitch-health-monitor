@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 from pitch_health_monitor.database.db_methods import (
     update_pitch_in_db,
@@ -55,6 +55,11 @@ async def process_pitch(pitch: Pitch, weather_api: WeatherAPI):
     Raises:
         Exception: If an error occurs while processing the pitch.
     """
+
+    one_hour_ago = datetime.utcnow() - timedelta(hours=1)
+
+    if pitch.last_checked_at > one_hour_ago:
+        return
 
     print(f"[{datetime.utcnow()}] Processing pitch {pitch.name}")
 
