@@ -47,7 +47,6 @@ def create_pitch(pitch_request: CreatePitchRequest) -> UUID:
     tags=["Pitches"],
 )
 def update_pitch(pitch_id: UUID, pitch_request: UpdatePitchRequest) -> None:
-
     if not update_pitch_in_db(pitch_id, pitch_request):
         raise HTTPException(
             status_code=HTTP_404_NOT_FOUND, detail="Pitch not found or not updated"
@@ -89,7 +88,7 @@ def get_all_pitches() -> List[PitchResponse]:
     tags=["Pitches"],
 )
 def get_pitch(
-    pitch_id: UUID = Path(..., description="The ID of the pitch to retrieve")
+    pitch_id: UUID = Path(..., description="The ID of the pitch to retrieve"),
 ) -> PitchResponse:
     pitch = get_pitch_from_db(
         pitch_id
