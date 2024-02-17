@@ -1,3 +1,4 @@
+from ast import Dict
 from typing import List, Optional
 from uuid import UUID
 from pitch_health_monitor.models.schemas import Pitch
@@ -57,26 +58,45 @@ def delete_pitch_from_db(pitch_uuid: UUID) -> bool:
     return result.deleted_count > 0
 
 
-def get_pitch_from_db(pitch_id: UUID) -> Optional[Pitch]:
+def get_pitch_from_db(
+    pitch_id: UUID, filters: Optional[Dict] = None
+) -> Optional[Pitch]:
     """
-    Retrieve a pitch from the database by its ID.
+    Retrieve a pitch from the database by its ID and optional additional filters.
 
     Args:
         pitch_id: The ID of the pitch to retrieve.
+        filters: Optional dictionary of additional filter criteria.
 
     Returns:
         Optional[Pitch]: The retrieved pitch object, or None if not found.
     """
 
-    return pitches_collection.find_one({"uuid": pitch_id})
+    query = {"uuid": pitch_id}
+
+    # If additional filters are provided, update the query with these filters
+    if filters:
+        query.update(filters)
+
+    return pitches_collection.find_one(query)
 
 
-def get_all_pitches_from_db() -> List[Pitch]:
+def get_all_pitches_from_db(filters: Optional[Dict] = None) -> List[Pitch]:
     """
-    Retrieve all pitches from the database.
+    Retrieve all pitches from the database with optional filtering.
+
+    Args:
+        filters: Optional dictionary of filter criteria.
 
     Returns:
-        List[Pitch]: A list of all pitch objects.
+        List[Pitch]: A list of pitch objects that match the filter criteria.
     """
 
-    return [Pitch.model_validate(pitch) for pitch in pitches_collection.find({})]
+    # Use an empty dictionary if no filters are provided
+    query_filters = filters if filters is not None else {}
+
+    # Retrieve pitches from the database that match the filter criteria
+    pitches = pitches_collection.find(query_filters)
+
+    # Convert each pitch document into a Pitch object
+    return [Pitch.model_validate(pitch) for pitch in pitches]
