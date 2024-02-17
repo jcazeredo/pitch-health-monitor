@@ -1,0 +1,27 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: FastAPI",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                "pitch_health_monitor.main:app",
+                "--reload"
+            ],
+            "jinja": true
+        },
+        {
+            "name": "Python: FastAPI",
+            "type": "python",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                "pitch_health_monitor.main:app",
+                "--reload"
+            ],
+            "console": "integratedTerminal"
+        }
+    ]
+}
