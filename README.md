@@ -31,7 +31,7 @@ poetry install
 docker run -d -p 27017:27017 --name mongodb -e MONGO_INITDB_ROOT_USERNAME=admin -e MONGO_INITDB_ROOT_PASSWORD=password mongo:jammy
 ````
 
-This command pulls the MongoDB image and runs it in a container, making the database available on port 27017.
+This command pulls the MongoDB image and runs it in a container, making the database available on port 27017. In case you have your own MongoDB instance, please change the environment variable `MONGO_URI` accordingly.
 
 #### Start the FastAPI Application
 Activate the Poetry shell to use the virtual environment:
