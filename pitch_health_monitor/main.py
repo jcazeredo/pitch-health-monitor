@@ -1,6 +1,6 @@
 import asyncio
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List
 from fastapi import FastAPI, HTTPException, Path, Body
 from pitch_health_monitor.database.db_methods import (
@@ -39,6 +39,90 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+
+@app.get(
+    "/pitches/maintenance-required",
+    response_model=List[PitchResponse],
+    tags=["Maintenance"],
+)
+def get_pitches_needing_maintenance() -> List[PitchResponse]:
+
+    maintenance_required_filter = {"current_condition": {"$gt": 2, "$lt": 10}}
+
+    pitches = get_all_pitches_from_db(maintenance_required_filter)
+
+    return [PitchResponse.model_validate(pitch.model_dump()) for pitch in pitches]
+
+
+@app.get(
+    "/pitches/turf-replacement-required",
+    response_model=List[PitchResponse],
+    tags=["Maintenance"],
+)
+def get_pitches_needing_turf_replacement() -> List[PitchResponse]:
+
+    turf_replacement_required_filter = {"current_condition": {"$lte": 2}}
+
+    pitches = get_all_pitches_from_db(turf_replacement_required_filter)
+
+    return [PitchResponse.model_validate(pitch.model_dump()) for pitch in pitches]
+
+
+@app.post(
+    "/pitches/{pitch_id}/schedule-turf-replacement",
+    response_model=None,
+    tags=["Maintenance"],
+)
+def schedule_turf_replacement(
+    pitch_id: UUID,
+    replacement_date: datetime = Body(
+        ...,
+        embed=True,
+        description="The future date when turf replacement is scheduled. Must be a datetime object in the future.",
+    ),
+) -> None:
+
+    pitch = get_pitch_from_db(pitch_id)
+    if pitch is None:
+        raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Pitch not found")
+
+    # Check if the provided replacement date is in the future
+    if replacement_date <= datetime.now(timezone.utc):
+        raise HTTPException(
+            status_code=HTTP_400_BAD_REQUEST,
+            detail="Replacement date must be in the future",
+        )
+
+    # Set the replacement date for the pitch
+    pitch.replacement_date = replacement_date
+
+    # Update the pitch record in the database
+    update_pitch_in_db(pitch_id, pitch)
+
+
+@app.post(
+    "/pitches/{pitch_id}/execute-maintenance", response_model=None, tags=["Maintenance"]
+)
+def execute_maintenance(pitch_id: UUID) -> None:
+
+    pitch = get_pitch_from_db(pitch_id)
+    if pitch is None:
+        raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Pitch not found")
+
+    # Check if there is a scheduled maintenance date and it is due (today or in the past)
+    if (
+        pitch.next_scheduled_maintenance is None
+        or pitch.next_scheduled_maintenance > datetime.utcnow()
+    ):
+        raise HTTPException(
+            status_code=HTTP_400_BAD_REQUEST,
+            detail="No due maintenance scheduled for this pitch",
+        )
+
+    pitch = perform_maintenance(pitch)
+
+    update_pitch_in_db(pitch_id, pitch)
 
 
 @app.post(
@@ -125,87 +209,3 @@ def get_pitch(
     pitch_response = PitchResponse.model_validate(pitch)
 
     return pitch_response
-
-
-@app.get(
-    "/pitches/maintenance-required",
-    response_model=List[PitchResponse],
-    tags=["Maintenance"],
-)
-def get_pitches_needing_maintenance() -> List[PitchResponse]:
-
-    maintenance_required_filter = {"current_condition": {"$gt": 2, "$lt": 10}}
-
-    pitches = get_all_pitches_from_db(maintenance_required_filter)
-
-    return [PitchResponse.model_validate(pitch.model_dump()) for pitch in pitches]
-
-
-@app.get(
-    "/pitches/turf-replacement-required",
-    response_model=List[PitchResponse],
-    tags=["Maintenance"],
-)
-def get_pitches_needing_turf_replacement() -> List[PitchResponse]:
-
-    turf_replacement_required_filter = {"current_condition": {"$lte": 2}}
-
-    pitches = get_all_pitches_from_db(turf_replacement_required_filter)
-
-    return [PitchResponse.model_validate(pitch.model_dump()) for pitch in pitches]
-
-
-@app.post(
-    "/pitches/{pitch_id}/schedule-turf-replacement",
-    response_model=None,
-    tags=["Maintenance"],
-)
-def schedule_turf_replacement(
-    pitch_id: UUID,
-    replacement_date: datetime = Body(
-        ...,
-        embed=True,
-        description="The future date when turf replacement is scheduled. Must be a datetime object in the future.",
-    ),
-) -> None:
-
-    pitch = get_pitch_from_db(pitch_id)
-    if pitch is None:
-        raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Pitch not found")
-
-    # Check if the provided replacement date is in the future
-    if replacement_date <= datetime.utcnow():
-        raise HTTPException(
-            status_code=HTTP_400_BAD_REQUEST,
-            detail="Replacement date must be in the future",
-        )
-
-    # Set the replacement date for the pitch
-    pitch.replacement_date = replacement_date
-
-    # Update the pitch record in the database
-    update_pitch_in_db(pitch_id, pitch)
-
-
-@app.post(
-    "/pitches/{pitch_id}/execute-maintenance", response_model=None, tags=["Maintenance"]
-)
-def execute_maintenance(pitch_id: UUID) -> None:
-
-    pitch = get_pitch_from_db(pitch_id)
-    if pitch is None:
-        raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Pitch not found")
-
-    # Check if there is a scheduled maintenance date and it is due (today or in the past)
-    if (
-        pitch.next_scheduled_maintenance is None
-        or pitch.next_scheduled_maintenance > datetime.utcnow()
-    ):
-        raise HTTPException(
-            status_code=HTTP_400_BAD_REQUEST,
-            detail="No due maintenance scheduled for this pitch",
-        )
-
-    pitch = perform_maintenance(pitch)
-
-    update_pitch_in_db(pitch_id, pitch)
