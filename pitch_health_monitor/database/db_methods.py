@@ -78,7 +78,9 @@ def get_pitch_from_db(
     if filters:
         query.update(filters)
 
-    return pitches_collection.find_one(query)
+    pitch = pitches_collection.find_one(query)
+
+    return Pitch.model_validate(pitch)
 
 
 def get_all_pitches_from_db(filters: Optional[Dict] = None) -> List[Pitch]:
