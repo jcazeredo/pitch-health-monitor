@@ -21,7 +21,7 @@ OPEN_WEATHER_API_KEY = os.getenv(
     "OPEN_WEATHER_API_KEY", "a22034aed53ca5845e3c8af45d527d3a"
 )
 
-PROCESS_INTERVAL_SECONDS = 30
+PROCESS_INTERVAL_SECONDS = 1800
 
 
 async def process_all_pitches_periodically():
