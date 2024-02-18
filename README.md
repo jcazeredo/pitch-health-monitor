@@ -2,6 +2,8 @@
 
 This project implements a RESTful API for monitoring and maintaining pitch health, developed with FastAPI, MongoDB and Pydantic. It includes a CRUD interface for pitch data management and specialized routes for maintenance operations. The system is designed to automatically assess pitch conditions every 30 minutes, taking into account weather impacts to determine necessary maintenance actions. For that, the system uses the OpenWeather API, which is already included in this demo code for demonstrations. 
 
+Note: Last version tested with Python 3.9.8
+
 ## Getting Started
 
 ### Clone the Repository
@@ -9,23 +11,6 @@ This project implements a RESTful API for monitoring and maintaining pitch healt
 git clone https://github.com/jcazeredo/pitch-health-monitor.git
 cd pitch-health-monitor
 ````
-
-### Alternative 1: Running with Docker Compose
-1. **Start the Application**: Run the following command in the project's root directory to start all services, including MongoDB and the FastAPI application:
-
-    ```bash
-    docker-compose up
-    ```
-
-2. **Stop the Application**: To stop and remove the containers, use:
-
-    ```bash
-    docker-compose down
-    ```
-
-### Alternative 2: Running with Traditional Setup
-If you prefer a manual setup instead of using Docker Compose, follow the instructions below.
-
 
 Setup Environment with Poetry
 Install Poetry and the project dependencies:
