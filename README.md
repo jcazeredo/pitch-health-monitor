@@ -6,8 +6,8 @@ This project implements a RESTful API for monitoring and maintaining pitch healt
 
 ### Clone the Repository
 ````
-git clone <your-repository-url>
-cd <your-repository-directory>
+git clone https://github.com/jcazeredo/pitch-health-monitor.git
+cd pitch-health-monitor
 ````
 
 ### Alternative 1: Running with Docker Compose
@@ -56,7 +56,7 @@ poetry shell
 
 Then, start the FastAPI server:
 ````
-uvicorn app.main:app --reload
+uvicorn pitch_health_monitor.main:app --reload
 ````
 
 The application will be available at http://localhost:8000.
